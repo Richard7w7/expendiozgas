@@ -4,25 +4,38 @@ include("../../db.php");
 if (isset($_GET['txtID'])) {
     $txtID = (isset($_GET['txtID'])) ? $_GET['txtID'] : "";
 
-    $sentencia = $conexion->prepare("SELECT foto FROM usuarios WHERE id=:id");
+    $sentencia = $conexion->prepare("SELECT * FROM puntos_ventas WHERE id_usuario=:id");
     $sentencia->bindParam(":id", $txtID);
     $sentencia->execute();
-    $registro_recuperado = $sentencia->fetch(PDO::FETCH_LAZY);
+    $registro_recuperado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
 
-    if (isset($registro_recuperado["foto"]) && $registro_recuperado["foto"] != "") {
-        if (file_exists("fotos/" . $registro_recuperado["foto"])) {
-            unlink("fotos/" . $registro_recuperado["foto"]);
+    if(!empty($registro_recuperado)){
+        $mensaje="Imposible eliminar: usuario tiene relaciones con puntos de ventas";
+        $icono="error";
+        header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
+    }else{
+        $sentencia = $conexion->prepare("SELECT foto FROM usuarios WHERE id=:id");
+        $sentencia->bindParam(":id", $txtID);
+        $sentencia->execute();
+        $registro_recuperado = $sentencia->fetch(PDO::FETCH_ASSOC);
+    
+        if (isset($registro_recuperado["foto"]) && $registro_recuperado["foto"] != "") {
+            if (file_exists("fotos/" . $registro_recuperado["foto"])) {
+                unlink("fotos/" . $registro_recuperado["foto"]);
+            }
         }
+    
+        $sentencia = $conexion->prepare("DELETE FROM usuarios WHERE id=:id");
+        $sentencia->bindParam(":id", $txtID);
+    
+        $sentencia->execute();
+    
+        $mensaje="Registro eliminado";
+        $icono="success";
+        header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
     }
 
-    $sentencia = $conexion->prepare("DELETE FROM usuarios WHERE id=:id");
-    $sentencia->bindParam(":id", $txtID);
 
-    $sentencia->execute();
-
-    $mensaje="Registro eliminado";
-    $icono="success";
-    header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
 }
 
 $sql = $conexion->prepare("SELECT u.id, u.id_rol,  r.rol as rol_nombre, u.nombre_completo,u.correo,u.telefono,u.foto 
