@@ -4,14 +4,25 @@ include("../../db.php");
 if (isset($_GET['txtID'])) {
     $txtID = (isset($_GET['txtID'])) ? $_GET['txtID'] : "";
 
-    $sentencia = $conexion->prepare("DELETE FROM departamentos WHERE id=:id");
+    $sentencia = $conexion->prepare("SELECT * FROM municipios WHERE id_departamento=:id");
     $sentencia->bindParam(":id", $txtID);
-
     $sentencia->execute();
+    $registro_recuperado = $sentencia->fetchAll(PDO::FETCH_ASSOC);
 
-    $mensaje="Registro eliminado";
-    $icono="success";
-    header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
+    if(!empty($registro_recuperado)){
+        $mensaje="Imposible eliminar: Departamento tiene relaciones con municipios";
+        $icono="error";
+        header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
+    }else{
+        $sentencia = $conexion->prepare("DELETE FROM departamentos WHERE id=:id");
+        $sentencia->bindParam(":id", $txtID);
+    
+        $sentencia->execute();
+    
+        $mensaje="Registro eliminado";
+        $icono="success";
+        header("Location:index.php?mensaje=".$mensaje."&icono=".$icono);
+    }
 }
 
 $sql = $conexion->prepare("SELECT * FROM departamentos ORDER BY departamento ASC;");
